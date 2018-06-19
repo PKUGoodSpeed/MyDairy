@@ -63,7 +63,7 @@ def showLc():
     for i in range(851):
         u = random.random()
         if u > 0.5:
-            msg += colored("[%03d]" %(i+1), "green")
+            msg += colored("[%03d]" %(i+1), "magenta", "on_green")
         else:
             msg += colored("[%03d]" %(i+1), "white")
         if (i+1) % 20 == 0:
