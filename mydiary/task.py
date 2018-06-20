@@ -6,6 +6,10 @@ Diary system
 import time
 from datetime import datetime
 from termcolor import colored
+from . import skill as skl
+
+
+MUTABLES = ['num_steps', 'rewards', 'deadline']
 
 
 def finished(t):
@@ -31,7 +35,9 @@ def proceed(task_id, db):
     t = db.execute(
         'SELECT * FROM mytasks WHERE id = ?', (str(task_id), )).fetchone()
     if not t:
-        return colored("ERROR: task #{I} does not exist!".format(I=str(task_id)), "red", "on_white")
+        return colored("ERROR: Task #{I} does not exist!".format(I=str(task_id)), "red", "on_white")
+    if submitted(t):
+        return colored("ERROR: Task #{I} has been submitted!".format(I=str(task_id)), "red", "on_white")
     if finished(t):
         return colored("COMPLETED: task #{I} is completed!".format(I=str(task_id)), "green")
     new_fin_steps = int(t['fin_steps']) + 1
@@ -53,7 +59,9 @@ def undoProceed(task_id, db):
     t = db.execute(
         'SELECT * FROM mytasks WHERE id = ?', (str(task_id), )).fetchone()
     if not t:
-        return colored("ERROR: task #{I} does not exist!".format(I=str(task_id)), "red", "on_white")
+        return colored("ERROR: Task #{I} does not exist!".format(I=str(task_id)), "red", "on_white")
+    if submitted(t):
+        return colored("ERROR: Task #{I} has been submitted!".format(I=str(task_id)), "red", "on_white")
     new_fin_steps = max(0, int(t['fin_steps']) - 1)
     db.execute(
         'UPDATE mytasks SET fin_steps = ? WHERE id = ?', (str(new_fin_steps), str(task_id)))
@@ -80,7 +88,9 @@ def showTaskDetail(t):
     stat = "Rewards {R} point; Status {F}/{N};\n".format(
         R=str(t['rewards']), F=str(t['fin_steps']), N=str(t['num_steps']))
     color = "yellow"
-    if passedDeadline(t):
+    if submitted(t):
+        color= "cyan"
+    elif passedDeadline(t):
         color = 'magenta'
     elif notStart(t):
         color = "red"
@@ -95,7 +105,9 @@ def showTaskDetail(t):
 def showTaskSummary(t):
     """ Show task summary """
     color = "yellow"
-    if passedDeadline(t):
+    if submitted(t):
+        color = "cyan"
+    elif passedDeadline(t):
         color = 'magenta'
     elif notStart(t):
         color = "red"
@@ -116,7 +128,7 @@ def showTasks(tasks):
     return msg
 
 
-""" Insert and remove tasks """
+""" Insert, remove, and update tasks """
 def registerTask(db, duration, **options):
     t_regi = int(time.time())
     deadline = t_regi + int(int(duration) * 3600)
@@ -139,22 +151,49 @@ def dropTask(task_id, db):
     t = db.execute(
         'SELECT * FROM mytasks WHERE id = ?', (str(task_id), )).fetchone()
     if not t:
-        return colored("ERROR: task #{I} does not exist!".format(I=str(task_id)), "red", "on_white")
+        return colored("ERROR: Task #{I} does not exist!".format(I=str(task_id)), "red", "on_white")
+    if submitted(t):
+        return colored("ERROR: Task #{I} has been submitted!".format(I=str(task_id)), "red", "on_white")
     db.execute('DELETE FROM mytasks WHERE id = ?', (str(task_id), ))
     db.commit()
     return colored("Drop Task {I} \'{NM}\'".format(
         I=str(task_id), NM=t['taskname']), "cyan")
 
 
+def updateTask(task_id, db, entry, value):
+    t = db.execute(
+        'SELECT * FROM mytasks WHERE id = ?', (str(task_id), )).fetchone()
+    if not t:
+        return colored("ERROR: Task #{I} does not exist!".format(I=str(task_id)), "red", "on_white")
+    if submitted(t):
+        return colored("ERROR: Task #{I} has been submitted!".format(I=str(task_id)), "red", "on_white")
+    if entry not in MUTABLES:
+        return colored("ERROR: Entry {E} is not in the mutable columns!".format(E=str(entry)), "red", "on_white")
+    if entry == 'deadline':
+        deadline = int(time.time() + float(value) * 3600)
+        deadline = str(datetime.fromtimestamp(deadline))
+        db.execute(
+            'UPDATE mytasks SET deadline = ? WHERE id = ?', (deadline, str(task_id)))
+        db.commit()
+    else:
+        db.execute(
+            'UPDATE mytasks SET {ENTRY} = ? WHERE id = ?'.format(ENTRY=str(entry)), (str(value), str(task_id)))
+        db.commit()
+    t = db.execute(
+        'SELECT * FROM mytasks WHERE id = ?', (str(task_id), )).fetchone()
+    return showTaskDetail(t)
+    
+    
+""" Submit task """
 def submitTask(task_id, db):
     t = db.execute(
         'SELECT * FROM mytasks WHERE id = ?', (str(task_id), )).fetchone()
     if not t:
-        return colored("ERROR: task #{I} does not exist!".format(I=str(task_id)), "red", "on_white")
-    if not finished(t):
-        return colored("ERROR: task #{I} is not completed!".format(I=str(task_id)), "red", "on_white")
+        return colored("ERROR: Task #{I} does not exist!".format(I=str(task_id)), "red", "on_white")
     if submitted(t):
-        return colored("ERROR: task #{I} has been submitted!".format(I=str(task_id)), "red", "on_white")
+        return colored("ERROR: Task #{I} has been submitted!".format(I=str(task_id)), "red", "on_white")
+    if not finished(t):
+        return colored("ERROR: Task #{I} is not completed!".format(I=str(task_id)), "red", "on_white")
     t_comp = int(time.time())
     t_comp = str(datetime.fromtimestamp(t_comp))
     r_points = int(t['rewards'])
@@ -165,16 +204,7 @@ def submitTask(task_id, db):
     # For study we need to update the total points
     if t['category'] == 'stdy':
         stat = db.execute('SELECT * FROM mystatus WHERE skill = ?', (t['direction'], )).fetchone()
-    if not stat:
-        db.execute('INSERT INTO mystatus (skill, level, points)'
-        'VALUES (?, ?, ?)', (t['direction'], "0", str(r_points)))
-        db.commit()
-        msg += colored("Getting new skill {S}; points: {OLD}->{NEW}\n".format(
-            S=t['direction'], OLD="0", NEW=str(r_points)), "cyan")
-    else:
-        new_pts = int(stat['points'] + r_points)
-        db.execute('UPDATE mystatus SET points = ? WHERE skill = ?', (str(new_pts), t['direction']))
-        db.commit()
-        msg += colored("Skill {S} improved; points: {OLD}->{NEW}".format(
-            S=t['direction'], OLD=str(stat['points']), NEW=str(new_pts)), "cyan")
+        if not stat:
+            msg += skl.addSkill(t['direction'], db, power=2) + "\n"
+        msg += skl.updateSkillPoints(t['direction'], db, delta=r_points) +'\n'
     return msg

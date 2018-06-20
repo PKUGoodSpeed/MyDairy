@@ -23,8 +23,8 @@ if not os.path.exists(app.config["DB_CACHE"]):
 
 
 initApp()
-'''
 app.register_blueprint(auth.blueprint)
+'''
 app.register_blueprint(question.blueprint)
 app.register_blueprint(solution.blueprint)
 # app.add_url_rule("/", endpoint='qustion.index')

@@ -31,7 +31,7 @@ def closeDatabase(e=None):
 def getLcDatabase():
     if "lc_database" not in g:
         g.lc_database = sqlite3.connect(
-            app.config["LC_DATABASE"], detect_types=sqlite3.PARSE_DECLTYPES
+            app.config["LEETCODE"]["DATABASE"], detect_types=sqlite3.PARSE_DECLTYPES
         )
         g.lc_database.row_factory = sqlite3.Row
     return g.lc_database
@@ -55,17 +55,3 @@ def dupDatebase(name="tasks"):
     tar += ".database"
     copyfile(src, tar)
     click.echo(name + " database is saved in " + tar)
-
-
-def showLc():
-    from numpy import random
-    msg = ""
-    for i in range(851):
-        u = random.random()
-        if u > 0.5:
-            msg += colored("[%03d]" %(i+1), "magenta", "on_green")
-        else:
-            msg += colored("[%03d]" %(i+1), "white")
-        if (i+1) % 20 == 0:
-            msg += "\n"
-    click.echo(msg)

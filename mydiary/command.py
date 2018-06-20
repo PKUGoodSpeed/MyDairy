@@ -8,6 +8,8 @@ from termcolor import colored
 from flask.cli import with_appcontext
 from . import app
 from . import task
+from . import skill as skl
+from . import leetcode as lc
 from . import database
 
 
@@ -24,12 +26,6 @@ def initDatabaseCmd():
     click.echo(colored("Initialize My Tasks Database Succeed!", "cyan"))
 
 
-@click.command('show-lc', short_help=colored("Show Leetcode completion status.", "blue"))
-@with_appcontext
-def showLcCmd():
-    database.showLc()
-
-
 @click.command('init-lc', short_help=colored("Initialize Leetcode database.", "blue"))
 @with_appcontext
 def initLcCmd():
@@ -40,9 +36,30 @@ def initLcCmd():
     lc_db = database.getLcDatabase()
     with app.open_resource('lc_schema.sql') as f:
         lc_db.executescript(f.read().decode('utf8'))
+    for i in range(app.config['LEETCODE']['NUM_QUESTIONS']):
+        lc_db.execute("INSERT INTO questions (status) VALUES (\'unsolved\')")
+    lc_db.commit()
     click.echo(colored("Initialize My LeetCode Database Succeed!", "cyan"))
 
 
+@click.command('show-lc', short_help=colored("Show Leetcode completion status.", "blue"))
+@with_appcontext
+def showLcCmd():
+    db = database.getLcDatabase()
+    click.echo(lc.showLc(db))
+
+
+@click.command('updt-lc', short_help=colored('Update lc questions\' status.', "blue"))
+@click.option('--qid', help=colored('Question ids.', "yellow"), default='0')
+@click.option('--status', help=colored('Status.', "yellow"), default='marked')
+@with_appcontext
+def updateLcCmd(qid, status):
+    db = database.getLcDatabase()
+    for q_id in qid.split(","):
+        click.echo(lc.updateQuestion(q_id, db, status))
+
+
+""" Task commands """
 @click.command('show-td', short_help=colored("Show task detail.", "blue"))
 @click.option('--tid', help=colored('Task id.', "yellow"), default=1)
 @with_appcontext
@@ -108,11 +125,22 @@ def undoTaskCmd(tid):
 
 
 @click.command('drop-t', short_help=colored('Drop an existing task.', "blue"))
-@click.option('--tid', help=colored('Task id.', "yellow"), default=1)
+@click.option('--tid', help=colored('Task id.', "yellow"), default=0)
 @with_appcontext
 def dropTaskCmd(tid):
     db = database.getDatabase()
     msg = task.dropTask(tid, db)
+    click.echo(msg)
+
+
+@click.command('updt-t', short_help=colored('Update an existing task.', "blue"))
+@click.option('--tid', help=colored('Task id.', "yellow"), default=1)
+@click.option('--entry', help=colored('Entry name of the update.', "yellow"), default='rewards')
+@click.option('--value', help=colored('Value to modified to for the above entry.', "yellow"), default=1)
+@with_appcontext
+def updateTaskCmd(tid, entry, value):
+    db = database.getDatabase()
+    msg = task.updateTask(tid, db, entry, value)
     click.echo(msg)
 
 
@@ -124,13 +152,69 @@ def submitTaskCmd(tid):
     msg = task.submitTask(tid, db)
     click.echo(msg)
 
+""" Skill commands """
+@click.command('show-as', short_help=colored('Show all skills\' status.', "blue"))
+@with_appcontext
+def showAllSkillsCmd():
+    db = database.getDatabase()
+    click.echo(skl.showAllSkills(db))
+
+
+@click.command('show-sk', short_help=colored('Show a skill status.', "blue"))
+@click.option('--skill', help=colored('Skill name.', "yellow"), default='algo')
+@with_appcontext
+def showSkillCmd(skill):
+    db = database.getDatabase()
+    skill_data = db.execute(
+        'SELECT * FROM mystatus WHERE skill = ?', (str(skill), )).fetchone()
+    if not skill_data:
+        click.echo(colored("ERROR: Skill {S} is not in your skill set!".format(S=str(skill)), "red", "on_white"))
+        return
+    click.echo(skl.showSkill(skill_data))
+
+
+@click.command('add-sk', short_help=colored('Add a new skill.', "blue"))
+@click.option('--skill', help=colored('Skill name.', "yellow"), default='algo')
+@click.option('--power', help=colored('Skill power.', "yellow"), default=2)
+@with_appcontext
+def addSkillCmd(skill, power):
+    db = database.getDatabase()
+    click.echo(skl.addSkill(skill, db, power=power))
+
+
+@click.command('drop-sk', short_help=colored('Drop an existing skill.', "blue"))
+@click.option('--skill', help=colored('Skill name.', "yellow"), default='')
+@with_appcontext
+def dropSkillCmd(skill):
+    db = database.getDatabase()
+    click.echo(skl.dropSkill(skill, db))
+
+
+@click.command('modi-sk', short_help=colored('Modify the power of an existing skill.', "blue"))
+@click.option('--skill', help=colored('Skill name.', "yellow"), default='algo')
+@click.option('--power', help=colored('Skill power.', "yellow"), default=2)
+@with_appcontext
+def modifySkillCmd(skill, power):
+    db = database.getDatabase()
+    click.echo(skl.modifySkill(skill, db, power))
+
+
+@click.command('updt-sk', short_help=colored('Updating a skill points.', "blue"))
+@click.option('--skill', help=colored('Skill name.', "yellow"), default='algo')
+@click.option('--delta', help=colored('Delta point values.', "yellow"), default='0')
+@with_appcontext
+def updateSkillCmd(skill, delta):
+    db = database.getDatabase()
+    click.echo(skl.updateSkillPoints(skill, db, int(delta)))
+
 
 def initApp():
     app.teardown_appcontext(database.closeDatabase)
     app.teardown_appcontext(database.closeLcDatabase)
     app.cli.add_command(initDatabaseCmd)
-    app.cli.add_command(showLcCmd)
     app.cli.add_command(initLcCmd)
+    app.cli.add_command(showLcCmd)
+    app.cli.add_command(updateLcCmd)
     app.cli.add_command(showTaskDetailCmd)
     app.cli.add_command(showTaskSummaryCmd)
     app.cli.add_command(registerTaskCmd)
@@ -138,3 +222,10 @@ def initApp():
     app.cli.add_command(undoTaskCmd)
     app.cli.add_command(dropTaskCmd)
     app.cli.add_command(submitTaskCmd)
+    app.cli.add_command(updateTaskCmd)
+    app.cli.add_command(showAllSkillsCmd)
+    app.cli.add_command(showSkillCmd)
+    app.cli.add_command(addSkillCmd)
+    app.cli.add_command(dropSkillCmd)
+    app.cli.add_command(modifySkillCmd)
+    app.cli.add_command(updateSkillCmd)

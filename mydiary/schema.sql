@@ -6,7 +6,7 @@ CREATE TABLE mystatus(
     /* algo, mldl, dtbs, syst, corresponds to stdy directions */
     skill TEXT UNIQUE NOT NULL,
     /* initially zero for all skills */
-    level INTEGER NOT NULL,
+    power INTEGER NOT NULL,
     /* points in the current level */
     points INTEGER NOT NULL
 );

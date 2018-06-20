@@ -10,6 +10,11 @@ class MyConfig:
     DEVELOPMENT = True
     SECRET_KEY = "auto_blog"
     DATABASE = app.instance_path + '/tasks.database'
-    LC_DATABASE = app.instance_path + "/leetcode.database"
-    LC_TOTAL = 851
+    LEETCODE = {
+        "DATABASE": app.instance_path + "/leetcode.database",
+        "NUM_QUESTIONS": 851
+    }
+    USER = {
+        "goodspeed": "1234567890"
+    }
     DB_CACHE = app.instance_path + "/cache"
