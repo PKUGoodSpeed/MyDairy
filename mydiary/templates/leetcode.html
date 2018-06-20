@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='preview/wmd.css') }}"/>
+<script src="{{ url_for('static', filename='preview/wmd.js') }}"></script>
+<script src="{{ url_for('static', filename='preview/showdown.js') }}"></script>
+<style type="text/css" media="screen">
+	textarea {width:100%;margin:0;}
+	textarea, #notes-preview {border:1px solid gray;}
+	#notes-preview {overflow-x:hidden;overflow-y:scroll;}
+</style>
+  <h1>{% block title %}Leetcode Status{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+{{ PAGEBODY | safe }}
+{% endblock %}
