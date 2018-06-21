@@ -50,10 +50,9 @@ def getNavs():
 def skill():
     from . import skill as skl
     db = getDatabase()
-    skills = db.execute('SELECT * FROM mystatus').fetchall()
-    if not skills:
-        skills = []
-    return skl.showAllSkills(db)
+    skills = [skl.getSkillStatus(s) for s in db.execute('SELECT * FROM mystatus').fetchall()]
+    return render_template(
+        'skill.html', SKLS=skills, NAVS=getNavs())
 
 
 @app.route("/leetcode")

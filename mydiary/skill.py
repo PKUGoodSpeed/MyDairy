@@ -16,11 +16,28 @@ def getColorViaLevel(level):
     elif level < 16:
         return "blue"
     elif level < 32:
-        return "cyan"
-    elif level < 64:
         return "yellow"
+    elif level < 64:
+        return "purple"
     else:
         return "red"
+
+
+def getSkillStatus(skill_data):
+    level = 0
+    skill = str(skill_data["skill"])
+    points = int(skill_data['points'])
+    power = int(skill_data['power'])
+    while level ** power <= points:
+        level += 1
+    current_level_points = points - (level - 1) ** power
+    points_to_next_level = level ** power - (level - 1) ** power
+    skill_data = dict(skill_data)
+    skill_data['level'] = level - 1
+    skill_data['ratio'] = str(100. * current_level_points / points_to_next_level)
+    skill_data['color'] = getColorViaLevel(level-1)
+    return skill_data
+
 
 
 """ Show skill status """

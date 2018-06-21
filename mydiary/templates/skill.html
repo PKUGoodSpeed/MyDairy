@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='progress.css') }}"/>
+  <h1>{% block title %}Skills' Status{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div>
+	{% for S in SKLS %}
+	<h2>Skill#{{ S['skill_id'] }}: {{ S['skill'] }}</h2>
+	<p>--------------------------------------</p>
+	<h4>Power: {{ S['power'] }}</h4>
+	<h4>Level: {{ S['level'] }}</h4>
+	<h4>Points: {{ S['points'] }}</h4>
+	<div class="w3-border">
+  	<div class="w3-{{ S['color'] }}" style="height:24px;width:{{ S['ratio'] }}%"></div>
+	</div>
+	<hr>
+	{% endfor %}
+</div>
+{{ PAGEBODY | safe }}
+{% endblock %}
