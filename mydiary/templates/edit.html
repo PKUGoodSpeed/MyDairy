@@ -11,38 +11,40 @@
 	#notes-preview {overflow-x:hidden;overflow-y:scroll;}
 </style>
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='progress.css') }}"/>
-  <h1>{% block title %}New Task{% endblock %}</h1>
+  <h1>{% block title %}{{ T['taskname'] }}{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
-  <form method="post">
-    <div>
-    <label for="category">Category</label>
-    <input name="category" id="category" value="">
-    <label for="direction">Direction</label>
-    <input name="direction" id="direction" value="">
-    <label for="taskname">Taskname</label>
-    <input name="taskname" id="taskname" value="">
+  <h5> Task Id={{ T[ 'id'] }} <h5>
+  <div>
+    <div style="display:block">category: {{ T['category'] }} </div>
+    <div style="display:block">direction: {{ T['direction'] | safe }} </div>
+    <div style="display:block">
+        <span style="display:inline-block; background-color:silver">Rewards: {{T['rewards']}}</span>
+        <span style="display:inline-block; background-color:magenta">Needed Steps: {{T['num_steps']}}</span>
     </div>
-    <hr>
-    <div>
-    <label for="duration">Duration (hours)</label>
-    <input name="duration" id="duration" value="">
-    <label for="rewards">Rewards</label>
-    <input name="rewards" id="rewards" value="">
-    <label for="num_steps">Steps Needed</label>
-    <input name="num_steps" id="num_steps" value="">
-    </div>
-    <hr>
+  </div>
+     <hr>
+  <div>
+    <div style="display:block">Start: {{ T['t_register'] }} </div>
+    <div style="display:block; color:{{ T['color'] }}">DeadLine: {{ T['deadline'] | safe }} </div>
+    <div style="display:block">Complete: {{ T['t_complete'] }} </div>
+    <div class="w3-border">
+  	<div class="w3-{{ T['color'] }}" style="height:24px;width:{{ T['ratio'] }}%"></div>
+	</div>
+  </div>
+  <div>
+   <form method="post">
     <div>
       <label for="description">Description (<i>Use markdown format</i>)</label>
-			<textarea name="description" id="notes" rows="10"></textarea>
+			<textarea name="description" id="notes" rows="10">{{ T['description'] | safe }}</textarea>
 
 			<label for="description">Preview</label>
 			<div id="notes-preview"></div>
 		</div>
     <input type="submit" value="Save">
-  </form>
+   </form>
+  </div>
 <script type="text/javascript">
 	new WMDEditor({
 		input: "notes",

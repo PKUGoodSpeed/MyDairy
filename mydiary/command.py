@@ -59,6 +59,33 @@ def updateLcCmd(qid, status):
         click.echo(lc.updateQuestion(q_id, db, status))
 
 
+@click.command('rollout-lc', short_help=colored("Roll out unsolved leetcode question numbers.", "blue"))
+@click.option('--nq', help=colored('Number of questions to be rolled out.', "yellow"), default=10)
+@with_appcontext
+def rolloutLcCmd(nq):
+    from .leetcode import getLcQuestionNumbers
+    lc_db = database.getLcDatabase()
+    todo = getLcQuestionNumbers(lc_db, n_question=int(nq))
+    msg = "Get unsolved questions " + ",".join([str(m) for m in todo])
+    click.echo(colored(msg, "cyan"))
+
+
+@click.command('regi-lc', short_help=colored("Register Leetcode question task.", "blue"))
+@click.option('--nq', help=colored('Number of questions to be rolled out.', "yellow"), default=10)
+@with_appcontext
+def registerLcTaskCmd(nq):
+    from .leetcode import registerLcTask
+    lc_db = database.getLcDatabase()
+    db = database.getDatabase()
+    try:
+        todo = registerLcTask(db, lc_db, n_question=int(nq))
+        msg = "Get unsolved questions " + ",".join([str(m) for m in todo])
+        click.echo(colored(msg, "cyan"))
+        click.echo(colored("Registered leetcode task!", "cyan"))
+    except:
+        click.echo(colored("ERROR: Registering leetcode task failed!", "red", "on_white"))
+
+
 """ Task commands """
 @click.command('show-td', short_help=colored("Show task detail.", "blue"))
 @click.option('--tid', help=colored('Task id.', "yellow"), default=1)
@@ -215,6 +242,8 @@ def initApp():
     app.cli.add_command(initLcCmd)
     app.cli.add_command(showLcCmd)
     app.cli.add_command(updateLcCmd)
+    app.cli.add_command(rolloutLcCmd)
+    app.cli.add_command(registerLcTaskCmd)
     app.cli.add_command(showTaskDetailCmd)
     app.cli.add_command(showTaskSummaryCmd)
     app.cli.add_command(registerTaskCmd)

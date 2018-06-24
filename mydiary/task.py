@@ -6,6 +6,7 @@ Diary system
 import time
 from datetime import datetime
 from termcolor import colored
+from markdown2 import markdown
 from . import skill as skl
 
 
@@ -28,6 +29,21 @@ def passedDeadline(t):
     ddl = int(time.mktime(time.strptime(str(datetime.now()).split(".")[0], "%Y-%m-%d %H:%M:%S")))
     now = int(time.time())
     return now > ddl
+
+
+""" Get Task status for web usage """
+def getTaskStatus(t):
+    task_data = dict(t)
+    task_data['color'] = 'yellow'
+    if submitted(t):
+        task_data['color'] = 'orange'
+    elif passedDeadline(t):
+        task_data['color'] = 'red'
+    elif finished(t):
+        task_data['color'] = 'green'
+    task_data['ratio'] = str(100. * t['fin_steps'] / t['num_steps'])
+    task_data['description'] = markdown(t['description'])
+    return task_data
 
 
 """ Proceed Actions """

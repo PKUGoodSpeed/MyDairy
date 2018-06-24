@@ -47,3 +47,31 @@ def updateQuestion(q_id, db, status):
     db.commit()
     return colored("Status of question #{I} -> {NEW}".format(
         I=str(q_id), NEW=str(status)), "cyan")
+
+
+def getLcQuestionNumbers(lc_db, n_question=10):
+    import numpy as np
+    lc_data = lc_db.execute('SELECT * FROM questions').fetchall()
+    rest_questions = [q['id'] for q in lc_data if q['status'] in ['unsolved', 'stuck']]
+    return np.random.choice(rest_questions, n_question)
+
+
+def registerLcTask(db, lc_db, n_question=10):
+    from .task import registerTask
+    todo = getLcQuestionNumbers(lc_db, n_question)
+    t_data = {
+        "duration": 24,
+        "category": "stdy",
+        "direction": "algo",
+        "taskname": "leetcode",
+        "rewards": "10",
+        "num_steps": "10"
+    }
+    t_data['description'] = """
+### Solve the following leetcode questions and post on LCAutoBlogs
+    """
+    t_data['description'] += "\n"
+    for td in todo:
+        t_data['description'] += "- " + str(td) + "\n"
+    registerTask(db, **t_data)
+    return todo

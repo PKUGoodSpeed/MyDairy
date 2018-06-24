@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <h1>{% block title %}Tasks{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div>
+<a class="action" href="{{ url_for('create') }}">Add Task</a>
+</div>
+{% for T in TASKS %}
+    <article class="post">
+      <header>
+        <div>
+          <h1 style="color:{{ T['color'] }}">{{ T['id'] }} {{ T['taskname'] }}</h1>
+          <div class='about'>{{ T['category'] }} {{ T['direction'] }} (Progress: {{ T['ratio'] }}%)</div>
+        </div>
+        <div>
+        <a class="action" href="{{ url_for('view', task_id=T['id']) }}">View</a>
+        </div>
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+{% endfor %}
+{% endblock %}

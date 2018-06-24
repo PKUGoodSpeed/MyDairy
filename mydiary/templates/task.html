@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='progress.css') }}"/>
+  <h1>{% block title %}{{ T['taskname'] }}{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <h5> Task Id={{ T[ 'id'] }} <h5>
+  <div>
+    <div style="display:block">category: {{ T['category'] }} </div>
+    <div style="display:block">direction: {{ T['direction'] | safe }} </div>
+    <div style="display:block">
+        <span style="display:inline-block; background-color:silver">Rewards: {{T['rewards']}}</span>
+        <span style="display:inline-block; background-color:magenta">Needed Steps: {{T['num_steps']}}</span>
+    </div>
+  </div>
+     <hr>
+  <div>
+    <div style="display:block">Start: {{ T['t_register'] }} </div>
+    <div style="display:block; color:{{ T['color'] }}">DeadLine: {{ T['deadline'] | safe }} </div>
+    <div style="display:block">Complete: {{ T['t_complete'] }} </div>
+    <div class="w3-border">
+  	<div class="w3-{{ T['color'] }}" style="height:24px;width:{{ T['ratio'] }}%"></div>
+	</div>
+  </div>
+  <div>
+      <article style="background-color: white">
+          {{ T['description'] | safe }}
+      </article>
+<a class="action" href="{{ url_for('edit', task_id=T['id']) }}">Edit Description</a>
+  </div>
+{% endblock %}
